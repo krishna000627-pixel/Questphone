@@ -1,0 +1,301 @@
+package neth.iecal.questphone.app.screens.launcher
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import neth.iecal.questphone.app.navigation.LauncherDialogRoutes
+import neth.iecal.questphone.app.navigation.RootRoute
+import neth.iecal.questphone.app.screens.launcher.dialogs.LauncherDialog
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun AppList(navController: NavController, viewModel: AppListViewModel) {
+    val apps by viewModel.filteredApps.collectAsState()
+    val showDialog by viewModel.showCoinDialog.collectAsState()
+    val selectedPackage by viewModel.selectedPackage.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val showHideConfirm by viewModel.showHideConfirm.collectAsState()
+    val context = LocalContext.current
+
+    // Long-press action state
+    var longPressedPkg by remember { mutableStateOf("") }
+    var longPressedName by remember { mutableStateOf("") }
+    var showLongPressMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var renameInput by remember { mutableStateOf("") }
+
+    // Hide confirm dialog - only hides, does NOT auto-block
+    if (showHideConfirm.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissHideConfirm() },
+            title = { Text("Hide App") },
+            text = { Text("Hide \"${viewModel.getDisplayName(showHideConfirm)}\" from the launcher? You can unhide it in Settings → Hidden Apps.") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmHideApp(showHideConfirm) }) {
+                    Text("Hide", color = Color(0xFFE57373))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissHideConfirm() }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // Rename dialog
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text("Rename App") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Rename how \"$longPressedName\" appears in your launcher",
+                        fontSize = 13.sp, color = Color.Gray
+                    )
+                    OutlinedTextField(
+                        value = renameInput,
+                        onValueChange = { renameInput = it },
+                        label = { Text("Display name") },
+                        placeholder = { Text(longPressedName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.renameApp(longPressedPkg, renameInput)
+                    showRenameDialog = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // Long-press menu: rename / hide / app info
+    if (showLongPressMenu) {
+        AlertDialog(
+            onDismissRequest = { showLongPressMenu = false },
+            title = { Text(longPressedName, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    TextButton(onClick = {
+                        renameInput = viewModel.getAppRenameIfSet(longPressedPkg) ?: ""
+                        showLongPressMenu = false
+                        showRenameDialog = true
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text("✏️  Rename", modifier = Modifier.fillMaxWidth(), color = Color.White)
+                    }
+                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    TextButton(onClick = {
+                        showLongPressMenu = false
+                        viewModel.onLongAppClick(longPressedPkg)
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text("🙈  Hide from launcher", modifier = Modifier.fillMaxWidth(), color = Color.White)
+                    }
+                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    TextButton(onClick = {
+                        showLongPressMenu = false
+                        try {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", longPressedPkg, null)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            )
+                        } catch (_: Exception) {}
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text("ℹ️  App Info", modifier = Modifier.fillMaxWidth(), color = Color.White)
+                    }
+                    val currentRename = viewModel.getAppRenameIfSet(longPressedPkg)
+                    if (currentRename != null) {
+                        HorizontalDivider(color = Color(0xFF2A2A2A))
+                        TextButton(onClick = {
+                            viewModel.renameApp(longPressedPkg, "")
+                            showLongPressMenu = false
+                        }, modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                "↩️  Reset name",
+                                modifier = Modifier.fillMaxWidth(),
+                                color = Color(0xFF888888), fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLongPressMenu = false }) { Text("Close") }
+            },
+            containerColor = Color(0xFF0D0D0D),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
+        )
+    }
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var textFieldLoaded by remember { mutableStateOf(false) }
+    val minutesPer5Coins by viewModel.minutesPerFiveCoins.collectAsState()
+    val areHardLockedQuestsAvailable by viewModel.isHardLockedQuestsToday.collectAsState()
+
+    // Fix #8: back button always goes to HomeScreen
+    BackHandler {
+        viewModel.onSearchQueryChange("")
+        keyboardController?.hide()
+        navController.navigate(RootRoute.HomeScreen.route) {
+            popUpTo(RootRoute.HomeScreen.route) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
+    val coins by viewModel.coins.collectAsState()
+    val remainingFreePasses by viewModel.remainingFreePassesToday.collectAsState()
+    val listState = rememberLazyListState()
+
+    var pulledDownHard by remember { mutableStateOf(false) }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y > 0 && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0) {
+                    if (!pulledDownHard) {
+                        pulledDownHard = true
+                        viewModel.onSearchQueryChange("")
+                        if (textFieldLoaded) keyboardController?.hide()
+                        navController.navigate(RootRoute.HomeScreen.route) {
+                            popUpTo(RootRoute.HomeScreen.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+                if (available.y != 0f || available.x != 0f) {
+                    if (textFieldLoaded) keyboardController?.hide()
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) { viewModel.loadHardLockedQuests() }
+
+    Scaffold { innerPadding ->
+        if (showDialog) {
+            LauncherDialog(
+                coins = coins,
+                onDismiss = { viewModel.dismissDialog() },
+                pkgName = selectedPackage,
+                rootNavController = navController,
+                minutesPerFiveCoins = minutesPer5Coins,
+                unlockApp = { viewModel.onConfirmUnlockApp(it) },
+                startDestination = if (areHardLockedQuestsAvailable)
+                    LauncherDialogRoutes.ShowAllQuest.route
+                else if (coins >= 5)
+                    LauncherDialogRoutes.UnlockAppDialog.route
+                else
+                    LauncherDialogRoutes.LowCoins.route,
+                remainingFreePasses = remainingFreePasses,
+                onFreePassUsed = { viewModel.useFreePass() },
+                areHardLockQuestsPresent = areHardLockedQuestsAvailable
+            )
+        }
+
+        Box(modifier = Modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .consumeWindowInsets(innerPadding)
+                    .padding(12.dp),
+                contentPadding = innerPadding,
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = viewModel::onSearchQueryChange,
+                        label = { Text("Search Apps") },
+                        placeholder = { Text("Type app name...") },
+                        leadingIcon = { Icon(Icons.Default.Search, "Search") },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                    Icon(Icons.Default.Clear, "Clear")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .onGloballyPositioned {
+                                if (!textFieldLoaded) {
+                                    textFieldLoaded = true
+                                    focusRequester.requestFocus()
+                                }
+                            },
+                        singleLine = true
+                    )
+                    Spacer(Modifier.size(4.dp))
+                }
+
+                items(apps, key = { it.packageName }) { app ->
+                    val displayName = viewModel.getDisplayName(app.packageName).ifBlank { app.name }
+                    val isRenamed = viewModel.getAppRenameIfSet(app.packageName) != null
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = { viewModel.onAppClick(app.packageName) },
+                                onLongClick = {
+                                    longPressedPkg = app.packageName
+                                    longPressedName = displayName
+                                    showLongPressMenu = true
+                                }
+                            )
+                            .padding(vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Normal)
+                        )
+                        if (isRenamed) {
+                            Text(text = app.name, fontSize = 10.sp, color = Color(0xFF555555))
+                        }
+                    }
+                }
+
+                item { Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)) }
+            }
+        }
+    }
+}

@@ -1,0 +1,57 @@
+# CI 1: Versioned APK archive — keeps every build (all flavors/versions)
+name: Android CI — Versioned Archive
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-versioned:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release APK (Fdroid flavor)
+        run: ./gradlew assembleFdroidRelease --stacktrace || ./gradlew assembleRelease --stacktrace || ./gradlew assembleDebug --stacktrace
+
+      - name: Sign APK
+        run: |
+          APK=$(find . -name "*release*.apk" 2>/dev/null | grep -v unsigned | head -n 1)
+          [ -z "$APK" ] && APK=$(find . -name "*debug*.apk" 2>/dev/null | head -n 1)
+          [ -z "$APK" ] && APK=$(find . -name "*.apk" 2>/dev/null | head -n 1)
+          echo "Found APK: $APK"
+          if [ -n "${{ secrets.KEYSTORE_B64 }}" ] && [ -n "$APK" ]; then
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > ks.jks
+            jarsigner -verbose -keystore ks.jks \
+              -storepass "${{ secrets.STORE_PASS }}" \
+              -keypass "${{ secrets.KEY_PASS }}" \
+              -signedjar QuestPhone_signed_v${{ github.run_number }}.apk \
+              "$APK" questphone
+            echo "APK_FILE=QuestPhone_signed_v${{ github.run_number }}.apk" >> $GITHUB_ENV
+          else
+            BASENAME=$(basename "$APK" .apk)
+            cp "$APK" "${BASENAME}_v${{ github.run_number }}.apk"
+            echo "APK_FILE=${BASENAME}_v${{ github.run_number }}.apk" >> $GITHUB_ENV
+          fi
+
+      - name: Upload Versioned APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestPhone-v${{ github.run_number }}-versioned
+          path: ${{ env.APK_FILE }}
+          retention-days: 90

@@ -1,0 +1,71 @@
+# CI 2: F-Droid Universal APK — downloads Play Universal version for F-Droid collection in Fragment
+# This CI builds the fdroidUniversal flavor and collects it in Fragment/fdroid/ folder
+name: Android CI — F-Droid Universal (Fragment)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-fdroid-universal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build F-Droid Universal Release APK
+        run: |
+          # Try fdroid flavor first, fallback to standard release
+          ./gradlew assembleFdroidRelease --stacktrace 2>/dev/null || \
+          ./gradlew assembleRelease --stacktrace 2>/dev/null || \
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Collect APK into Fragment/fdroid directory
+        run: |
+          mkdir -p Fragment/fdroid
+          APK=$(find . -path "*/fdroid*" -name "*.apk" 2>/dev/null | grep -v "test\|Test" | head -n 1)
+          [ -z "$APK" ] && APK=$(find . -name "*release*.apk" 2>/dev/null | grep -v unsigned | head -n 1)
+          [ -z "$APK" ] && APK=$(find . -name "*.apk" 2>/dev/null | grep -v "test\|Test" | head -n 1)
+          echo "Collecting: $APK"
+          cp "$APK" "Fragment/fdroid/QuestPhone_fdroid_universal_v${{ github.run_number }}.apk"
+          echo "APK_FILE=Fragment/fdroid/QuestPhone_fdroid_universal_v${{ github.run_number }}.apk" >> $GITHUB_ENV
+
+      - name: Sign F-Droid APK
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_B64 }}" ] && [ -f "${{ env.APK_FILE }}" ]; then
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > ks.jks
+            UNSIGNED="${{ env.APK_FILE }}"
+            SIGNED="${UNSIGNED%.apk}_signed.apk"
+            jarsigner -verbose -keystore ks.jks \
+              -storepass "${{ secrets.STORE_PASS }}" \
+              -keypass "${{ secrets.KEY_PASS }}" \
+              -signedjar "$SIGNED" \
+              "$UNSIGNED" questphone
+            echo "APK_FILE=$SIGNED" >> $GITHUB_ENV
+          fi
+
+      - name: Upload F-Droid Universal APK to Fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestPhone-fdroid-universal-v${{ github.run_number }}
+          path: Fragment/fdroid/
+          retention-days: 365
+
+      - name: Generate Fragment index
+        run: |
+          echo "# QuestPhone F-Droid Universal Builds" > Fragment/fdroid/INDEX.md
+          echo "" >> Fragment/fdroid/INDEX.md
+          echo "Build v${{ github.run_number }} — $(date -u '+%Y-%m-%d %H:%M UTC')" >> Fragment/fdroid/INDEX.md
+          echo "Commit: ${{ github.sha }}" >> Fragment/fdroid/INDEX.md
