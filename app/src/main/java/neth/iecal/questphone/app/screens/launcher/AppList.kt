@@ -111,7 +111,7 @@ fun AppList(navController: NavController, viewModel: AppListViewModel) {
                                     val prompt = "App name: $longPressedName. Give it a $styleHint display name. Reply with the name ONLY. No explanation. No punctuation. Max 3 words."
                                     val result = viewModel.gemmaRepository.quickChat(prompt)
                                     val suggestion = result.getOrNull()
-                                        ?.replace(Regex("["'*`]"), "")
+                                        ?.replace(Regex("""["'*`]"""), "")
                                         ?.trim()?.take(25) ?: ""
                                     if (suggestion.isNotBlank() && !suggestion.contains("User") && !suggestion.contains("wants")) renameInput = suggestion
                                     else aiError = true

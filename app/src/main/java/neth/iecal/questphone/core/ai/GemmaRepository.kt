@@ -193,8 +193,7 @@ ECONOMY RULES (ENFORCE STRICTLY - never bypass):
                     put("maxOutputTokens", 20)   // name suggestions need very few tokens
                     put("topP", 0.9)
                     put("stopSequences", org.json.JSONArray().apply {
-                        put("
-"); put("."); put(",")
+                        put("\n"); put("."); put(",")
                     })
                     put("thinkingConfig", JSONObject().apply {
                         put("thinkingBudget", 0)
@@ -220,8 +219,8 @@ ECONOMY RULES (ENFORCE STRICTLY - never bypass):
                 .getJSONObject(0).getString("text").trim()
             // Strip quotes, asterisks, bullet points, and leading/trailing junk
             val clean = raw
-                .replace(Regex("^[*\-•"'`]+\s*"), "")
-                .replace(Regex("["'`*]+$"), "")
+                .replace(Regex("""^[*\-•"'`]+\s*"""), "")
+                .replace(Regex("""["'`*]+$"""), "")
                 .lines().firstOrNull { it.isNotBlank() }?.trim() ?: ""
             Result.success(clean)
         } catch (e: Exception) {
@@ -321,8 +320,7 @@ ECONOMY RULES (ENFORCE STRICTLY - never bypass):
                             !trimmed.startsWith("Call out") &&
                             !trimmed.startsWith("Demand")
                         }
-                        if (firstRealLine > 0) lines.drop(firstRealLine).joinToString("
-")
+                        if (firstRealLine > 0) lines.drop(firstRealLine).joinToString("\n")
                         else text
                     }
                     .trim()
