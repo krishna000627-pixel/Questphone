@@ -327,7 +327,7 @@ ECONOMY RULES (ENFORCE STRICTLY - never bypass):
 
                 val actionDone = executeToolCalls(strippedText)
                 val displayText = strippedText
-                    .replace(Regex("```action\s*\{.*?\}\s*```", RegexOption.DOT_MATCHES_ALL), "")
+                    .replace(Regex("""```action\s*\{.*?\}\s*```""", RegexOption.DOT_MATCHES_ALL), "")
                     .trim()
 
                 Result.success(AiResponse(displayText, actionDone))
@@ -339,7 +339,7 @@ ECONOMY RULES (ENFORCE STRICTLY - never bypass):
 
     // ---- Tool execution with economy enforcement ------------------------------------------------------------
     private suspend fun executeToolCalls(text: String): String? {
-        val regex = Regex("```action\\s*(\\{.*?\\})\\s*```", RegexOption.DOT_MATCHES_ALL)
+        val regex = Regex("""```action\s*(\{.*?\})\s*```""", RegexOption.DOT_MATCHES_ALL)
         val results = mutableListOf<String>()
         regex.findAll(text).forEach { match ->
             try {
