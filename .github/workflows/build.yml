@@ -1,0 +1,78 @@
+name: QuestPhone CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Restore app signing keystore
+        run: |
+          mkdir -p app
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 --decode > app/questphone_release.jks
+          if [ ! -s app/questphone_release.jks ]; then
+            echo "❌ KEYSTORE_B64 secret is empty or missing."
+            echo "In Termux run:  base64 -w 0 ~/questphone_release.jks"
+            echo "Then paste the output into: GitHub → Repo → Settings → Secrets → KEYSTORE_B64"
+            exit 1
+          fi
+          echo "✅ Keystore restored ($(du -sh app/questphone_release.jks | cut -f1))"
+
+      - name: Write local.properties
+        run: |
+          cat > local.properties << LEOF
+          KEYSTORE_FILE=questphone_release.jks
+          KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS=${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+          KAI_API_KEY=${{ secrets.KAI_API_KEY }}
+          LEOF
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build fdroid release APK
+        run: ./gradlew assembleFdroidRelease
+
+      - name: Collect APK
+        run: |
+          APK=$(find app/build/outputs/apk/fdroid/release -name "*.apk" \
+                | grep -v unsigned | head -1)
+          [ -z "$APK" ] && APK=$(find app/build/outputs/apk -name "*.apk" \
+                | grep -v test | head -1)
+          DEST="QuestPhone_v${{ github.run_number }}.apk"
+          cp "$APK" "$DEST"
+          SIZE=$(du -sh "$DEST" | cut -f1)
+          echo "APK_PATH=$DEST" >> $GITHUB_ENV
+          echo "APK_SIZE=$SIZE"  >> $GITHUB_ENV
+          echo "✅ APK: $DEST ($SIZE)"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestPhone-v${{ github.run_number }}
+          path: ${{ env.APK_PATH }}
+          retention-days: 365
+
+      - name: Build summary
+        run: |
+          echo "## ✅ QuestPhone Build #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "| | |"                                            >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|"                                        >> $GITHUB_STEP_SUMMARY
+          echo "| APK | \`${{ env.APK_PATH }}\` |"              >> $GITHUB_STEP_SUMMARY
+          echo "| Size | ${{ env.APK_SIZE }} |"                  >> $GITHUB_STEP_SUMMARY
+          echo "| Signed | ✅ App keystore |"                    >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |"              >> $GITHUB_STEP_SUMMARY
