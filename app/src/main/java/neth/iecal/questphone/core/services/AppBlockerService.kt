@@ -317,7 +317,8 @@ class AppBlockerService : Service() {
         val studyApps = userRepository.getStudyApps()
         val isStudyApp = studyApps.contains(detectedForegroundPackage)
         if (!isStudyApp && isStudyQuotaBlockActive()) {
-            if (!isOverlayActive && !isTemporarilyUnlocked) {
+            // Hard block — coins cannot bypass quota block
+            if (!isOverlayActive) {
                 Log.d(TAG, "Study quota block active for: $detectedForegroundPackage")
                 showLockScreenFor(detectedForegroundPackage)
                 return true
