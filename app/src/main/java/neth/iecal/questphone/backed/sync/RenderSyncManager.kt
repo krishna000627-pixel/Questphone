@@ -1,7 +1,6 @@
 package neth.iecal.questphone.backed.sync
 
 import android.content.Context
-import android.provider.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -51,11 +50,8 @@ object RenderSyncPrefs {
 
 object RenderSyncManager {
 
-    // Device ID — stable per install
-    fun getDeviceId(ctx: Context): String {
-        return Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ANDROID_ID)
-            ?: "unknown_device"
-    }
+    // Fixed ID — all devices share the same backup slot on the server
+    fun getDeviceId(ctx: Context): String = "krishna_qp"
 
     sealed class SyncResult {
         object Success : SyncResult()
