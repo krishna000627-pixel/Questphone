@@ -845,6 +845,89 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                 }
             }
 
+            // ── Check for Update ────────────────────────────────────
+            item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val scope = rememberCoroutineScope()
+                var updateState by remember { mutableStateOf<String?>(null) }
+                var checking by remember { mutableStateOf(false) }
+                var pendingUpdate by remember { mutableStateOf<neth.iecal.questphone.backed.update.UpdateInfo?>(null) }
+                var downloading by remember { mutableStateOf(false) }
+                var progress by remember { mutableIntStateOf(0) }
+
+                SettingCard(title = "App Update", subtitle = "Check for a newer version of QuestPhone") {
+                    if (pendingUpdate != null) {
+                        val update = pendingUpdate!!
+                        Text(
+                            "⬆️ v${update.versionName} available",
+                            fontSize = 13.sp,
+                            color = Color(0xFFFFAB40),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (update.changelog.isNotBlank()) {
+                            Text(update.changelog, fontSize = 11.sp, color = Color(0xFF666666))
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        if (downloading) {
+                            LinearProgressIndicator(
+                                progress = { progress / 100f },
+                                modifier = Modifier.fillMaxWidth(),
+                                color = Color(0xFFFFAB40),
+                                trackColor = Color(0xFF2A2A2A)
+                            )
+                            Text("Downloading... $progress%", fontSize = 11.sp, color = Color(0xFF666666))
+                        } else {
+                            Button(
+                                onClick = {
+                                    downloading = true
+                                    scope.launch {
+                                        try {
+                                            neth.iecal.questphone.backed.update.AppUpdater
+                                                .downloadAndInstall(context, update.downloadUrl) { p -> progress = p }
+                                        } catch (_: Exception) { downloading = false }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFAB40))
+                            ) { Text("Download & Install", color = Color.Black, fontWeight = FontWeight.Bold) }
+                        }
+                    } else {
+                        updateState?.let {
+                            Text(it, fontSize = 12.sp, color = if (it.startsWith("✅")) Color(0xFF69F0AE) else Color(0xFF666666))
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        Button(
+                            onClick = {
+                                checking = true
+                                updateState = null
+                                scope.launch {
+                                    val url = neth.iecal.questphone.backed.sync.RenderSyncPrefs.getServerUrl(context)
+                                    val token = neth.iecal.questphone.backed.sync.RenderSyncPrefs.getSyncToken(context)
+                                    if (url.isBlank() || token.isBlank()) {
+                                        updateState = "⚠️ Configure Auto-Sync server first"
+                                        checking = false
+                                        return@launch
+                                    }
+                                    val update = neth.iecal.questphone.backed.update.AppUpdater
+                                        .checkForUpdate(context, url, token)
+                                    if (update != null) {
+                                        pendingUpdate = update
+                                    } else {
+                                        updateState = "✅ Already on latest version"
+                                    }
+                                    checking = false
+                                }
+                            },
+                            enabled = !checking,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A1A1A))
+                        ) {
+                            Text(if (checking) "Checking..." else "🔍 Check for Update", color = Color.White)
+                        }
+                    }
+                }
+            }
+
             item { Spacer(Modifier.height(32.dp)) }
         }
         } // close Column
