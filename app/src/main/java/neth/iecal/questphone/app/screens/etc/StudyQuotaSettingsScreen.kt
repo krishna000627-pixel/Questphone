@@ -381,6 +381,28 @@ fun StudyQuotaSettingsScreen(
                 }
             }
 
+            // -- Dev Test Buttons ---------------------------------------
+            item {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val today = nethical.questphone.core.core.utils.getCurrentDate()
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { settingsVm.setStudyQuotaBlockDate(today) },
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFFF5252)
+                        )
+                    ) { Text("🔴 Simulate Block", fontSize = 12.sp) }
+                    OutlinedButton(
+                        onClick = { settingsVm.setStudyQuotaBlockDate("") },
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF69F0AE)
+                        )
+                    ) { Text("🟢 Clear Block", fontSize = 12.sp) }
+                }
+            }
+
             item { Spacer(Modifier.height(32.dp)) }
         }
     }
