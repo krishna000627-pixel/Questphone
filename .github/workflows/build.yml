@@ -35,30 +35,51 @@ jobs:
       - name: Build Release APK
         run: chmod +x gradlew && ./gradlew assembleFdroidRelease
 
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestPhone-${{ github.run_number }}
+          path: app/build/outputs/apk/fdroid/release/*.apk
+          retention-days: 30
+
+      # Only runs when commit message starts with "release:"
+      - name: Check if release commit
+        id: check
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          if [[ "$MSG" == release:* ]]; then
+            echo "do_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "do_release=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Get version info
         id: version
+        if: steps.check.outputs.do_release == 'true'
         run: |
-          VERSION_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
-          VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '".*"' | tr -d '"' | head -1)
-          echo "code=$VERSION_CODE" >> $GITHUB_OUTPUT
-          echo "name=$VERSION_NAME" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION_NAME-$VERSION_CODE" >> $GITHUB_OUTPUT
+          CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
+          NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '".*"' | tr -d '"' | head -1)
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "tag=v$NAME-$CODE" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         id: release
+        if: steps.check.outputs.do_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: QuestPhone v${{ steps.version.outputs.name }}
-          body: "Build #${{ github.run_number }} — auto release"
+          body: ${{ github.event.head_commit.message }}
           files: app/build/outputs/apk/fdroid/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify Render server
+        if: steps.check.outputs.do_release == 'true'
         env:
-          RENDER_URL:  ${{ secrets.RENDER_URL }}
-          SYNC_TOKEN:  ${{ secrets.SYNC_TOKEN }}
+          RENDER_URL: ${{ secrets.RENDER_URL }}
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
         run: |
           APK_URL=$(echo '${{ steps.release.outputs.assets }}' | python3 -c "
           import sys, json
@@ -69,4 +90,4 @@ jobs:
           curl -sf -X POST "$RENDER_URL/notify-update" \
             -H "Content-Type: application/json" \
             -H "x-sync-token: $SYNC_TOKEN" \
-            -d "{\"versionCode\": ${{ steps.version.outputs.code }}, \"versionName\": \"${{ steps.version.outputs.name }}\", \"downloadUrl\": \"$APK_URL\", \"changelog\": \"Build #${{ github.run_number }}\"}"
+            -d "{\"versionCode\":${{ steps.version.outputs.code }},\"versionName\":\"${{ steps.version.outputs.name }}\",\"downloadUrl\":\"$APK_URL\",\"changelog\":\"${{ github.event.head_commit.message }}\"}"
