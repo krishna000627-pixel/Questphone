@@ -76,6 +76,8 @@ import neth.iecal.questphone.backed.repositories.QuestRepository
 import neth.iecal.questphone.backed.repositories.StatsRepository
 import neth.iecal.questphone.backed.repositories.UserRepository
 import neth.iecal.questphone.core.sync.GitHubSyncManager
+import neth.iecal.questphone.backed.sync.RenderSyncManager
+import neth.iecal.questphone.backed.sync.RenderSyncPrefs
 import neth.iecal.questphone.core.services.AppBlockerService
 import neth.iecal.questphone.core.utils.FcmHandler
 import neth.iecal.questphone.core.utils.receiver.AppInstallReceiver
