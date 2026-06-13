@@ -3,6 +3,7 @@ package neth.iecal.questphone.app.screens.account
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -295,6 +297,35 @@ fun RenderSyncSettingsScreen(
                         else MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
+
+            // ── Profile Settings ───────────────────────────────────
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate(neth.iecal.questphone.app.navigation.RootRoute.ProfileSettings.route) }
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Profile Settings", fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge)
+                        Text("Edit name, class, skills, stats & more",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Edit Profile",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
