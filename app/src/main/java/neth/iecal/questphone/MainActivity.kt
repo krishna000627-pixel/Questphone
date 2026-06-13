@@ -481,6 +481,34 @@ class MainActivity : ComponentActivity() {
         handleNotificationIntent(intent)
         super.onResume()
         gitHubSyncManager.flushPendingIfOnline()
+        // Auto-pull: silently restore from server if it has newer data
+        if (RenderSyncPrefs.isEnabled(this)) {
+            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    val url = RenderSyncPrefs.getServerUrl(this@MainActivity)
+                    val token = RenderSyncPrefs.getSyncToken(this@MainActivity)
+                    val lastSync = RenderSyncPrefs.getLastSyncAt(this@MainActivity)
+                    if (url.isBlank() || token.isBlank()) return@launch
+                    val conn = (java.net.URL("$url/sync/check?clientUpdatedAt=$lastSync")
+                        .openConnection() as java.net.HttpURLConnection).apply {
+                        requestMethod = "GET"
+                        setRequestProperty("x-sync-token", token)
+                        setRequestProperty("x-device-id", RenderSyncManager.getDeviceId(this@MainActivity))
+                        connectTimeout = 8000
+                        readTimeout = 8000
+                    }
+                    val code = conn.responseCode
+                    val body = conn.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+                    conn.disconnect()
+                    if (code == 200) {
+                        val hasUpdate = org.json.JSONObject(body).optBoolean("hasUpdate", false)
+                        if (hasUpdate) {
+                            RenderSyncManager.pull(this@MainActivity, userRepository, questRepository)
+                        }
+                    }
+                } catch (_: Exception) { }
+            }
+        }
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
