@@ -61,12 +61,6 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                     }
                 },
                 actions = {
-                    TextButton(onClick = { navController.navigate(RootRoute.ProfileSettings.route) }) {
-                        Text("Edit", color = Color(0xFF7B1FA2))
-                    }
-                    TextButton(onClick = { navController.navigate(RootRoute.BackupRestore.route) }) {
-                        Text("Backup", color = Color(0xFF7B1FA2))
-                    }
                     TextButton(onClick = { navController.navigate(RootRoute.RenderSync.route) }) {
                         Text("Auto-Sync", color = Color(0xFF1565C0))
                     }
