@@ -215,6 +215,13 @@ class AppListViewModel @Inject constructor(
         reloadDistractions()
         loadMinutePer5Coins()
         reloadUnlockedApps()
+
+        // Study quota hard block — no app can be launched while block is active
+        val quotaBlockDate = userRepository.getStudyQuotaBlockDate()
+        val today = nethical.questphone.core.core.utils.getCurrentDate()
+        val studyApps = userRepository.getStudyApps()
+        if (quotaBlockDate == today && !studyApps.contains(packageName)) return
+
         val cooldownUntil = unlockedDistractions.value[packageName] ?: 0L
         val isDistraction = _distractions.value.contains(packageName)
 
@@ -271,6 +278,14 @@ class AppListViewModel @Inject constructor(
 
     fun onConfirmUnlockApp(coins: Int) {
         Log.d("Unlocking app ${_selectedPackage.value}","duration ${minutesPerFiveCoins.value * coins}")
+
+        // Study quota hard block — coins cannot unlock apps while block is active
+        val quotaBlockDate = userRepository.getStudyQuotaBlockDate()
+        val today = nethical.questphone.core.core.utils.getCurrentDate()
+        if (quotaBlockDate == today) {
+            _showCoinDialog.value = false
+            return
+        }
 
         requestAppUnlock(minutesPerFiveCoins.value * (coins/5))
         userRepository.useCoins(coins)
