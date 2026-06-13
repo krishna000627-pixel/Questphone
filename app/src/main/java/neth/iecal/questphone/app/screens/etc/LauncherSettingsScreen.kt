@@ -39,6 +39,9 @@ import nethical.questphone.core.core.utils.managers.openDefaultLauncherSettings
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.mutableIntStateOf
 import javax.inject.Inject
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.LinearProgressIndicator
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LauncherSettingsViewModel @Inject constructor(
