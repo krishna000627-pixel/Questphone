@@ -73,6 +73,7 @@ class LauncherSettingsViewModel @Inject constructor(
     fun setPrimeStudyPackage(pkg: String) = userRepository.setPrimeStudyPackage(pkg)
     fun getDailyStudyQuotaHours() = userRepository.getDailyStudyQuotaHours()
     fun setDailyStudyQuotaHours(hours: Float) = userRepository.setDailyStudyQuotaHours(hours)
+    fun setStudyQuotaBlockDate(date: String) = userRepository.setStudyQuotaBlockDate(date)
     fun getStudyApps() = userRepository.getStudyApps()
 }
 
