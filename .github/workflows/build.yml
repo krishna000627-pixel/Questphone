@@ -1,0 +1,55 @@
+name: QuestPhone CI
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Keystore & local.properties
+        env:
+          KEYSTORE_B64:       ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD:  ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD:       ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS:          ${{ secrets.KEY_ALIAS }}
+        run: |
+          mkdir -p app
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "Using stored keystore"
+            echo "$KEYSTORE_B64" | base64 --decode > app/questphone_release.jks
+          else
+            echo "Generating keystore (no secret found)"
+            keytool -genkeypair \
+              -alias "${KEY_ALIAS:-questphone}" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -keystore app/questphone_release.jks \
+              -storepass "${KEYSTORE_PASSWORD:-QuestPhone2025}" \
+              -keypass "${KEY_PASSWORD:-QuestPhone2025}" \
+              -dname "CN=QuestPhone,O=Krishna,C=IN" -noprompt
+          fi
+          cat >> local.properties << PROPS
+          KEYSTORE_FILE=questphone_release.jks
+          KEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}
+          KEY_ALIAS=${KEY_ALIAS}
+          KEY_PASSWORD=${KEY_PASSWORD}
+          PROPS
+
+      - name: Build Release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleFdroidRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuestPhone-${{ github.run_number }}
+          path: app/build/outputs/apk/fdroid/release/*.apk
+          retention-days: 30
