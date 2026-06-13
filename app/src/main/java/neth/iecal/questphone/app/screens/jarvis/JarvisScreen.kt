@@ -474,6 +474,7 @@ private fun JarvisCommandsTab() {
             }
             item { Spacer(Modifier.height(80.dp)) }
         }
+    }
 
     Box(Modifier.fillMaxSize(), Alignment.BottomEnd) {
         FloatingActionButton(
@@ -897,7 +898,8 @@ private fun JarvisSettingsTab(navController: androidx.navigation.NavController) 
             }
         }
 
-        item {\n            Text(\"DATA\", fontWeight = FontWeight.Black, fontSize = 11.sp,
+        item {
+            Text("DATA", fontWeight = FontWeight.Black, fontSize = 11.sp,
                 color = JarvisAccent.copy(alpha = 0.6f), letterSpacing = 2.sp,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
         }
@@ -929,7 +931,8 @@ private fun JarvisSettingsTab(navController: androidx.navigation.NavController) 
             }
         }
 
-        item {\n            Text(\"AI ASSISTANT\", fontWeight = FontWeight.Black, fontSize = 11.sp,
+        item {
+            Text("AI ASSISTANT", fontWeight = FontWeight.Black, fontSize = 11.sp,
                 color = JarvisAccent.copy(alpha = 0.6f), letterSpacing = 2.sp,
                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
         }
