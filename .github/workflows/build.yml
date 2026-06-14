@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +23,51 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      # Only true when commit message starts with "release:" or manual dispatch with release=true
+      - name: Check if release commit
+        id: check
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          MANUAL="${{ github.event.inputs.release }}"
+          if [[ "$MSG" == release:* ]] || [[ "$MANUAL" == "true" ]]; then
+            echo "do_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "do_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version
+        id: bump
+        if: steps.check.outputs.do_release == 'true'
+        run: |
+          OLD_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
+          NEW_CODE=$((OLD_CODE + 1))
+          OLD_NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"' | head -1)
+          # bump patch number of versionName e.g. 2.7.1 -> 2.7.2
+          MAJOR=$(echo "$OLD_NAME" | cut -d. -f1)
+          MINOR=$(echo "$OLD_NAME" | cut -d. -f2)
+          PATCH=$(echo "$OLD_NAME" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_NAME="$MAJOR.$MINOR.$NEW_PATCH"
+
+          sed -i "s/versionCode = $OLD_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
+          sed -i "s/versionName = \"$OLD_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
+
+          git config user.name "QuestPhone CI"
+          git config user.email "ci@questphone.app"
+          git add app/build.gradle.kts
+          git commit -m "ci: bump version to $NEW_NAME ($NEW_CODE)"
+          git push
+
+      - name: Get version info
+        id: version
+        if: steps.check.outputs.do_release == 'true'
+        run: |
+          CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
+          NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '".*"' | tr -d '"' | head -1)
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "tag=v$NAME-$CODE" >> $GITHUB_OUTPUT
 
       - name: Setup Keystore & local.properties
         env:
@@ -41,6 +88,7 @@ jobs:
           printf "KEYSTORE_FILE=questphone_release.jks\nKEYSTORE_PASSWORD=${KEYSTORE_PASSWORD}\nKEY_ALIAS=${KEY_ALIAS}\nKEY_PASSWORD=${KEY_PASSWORD}\n" >> local.properties
 
       - name: Build Release APK
+        timeout-minutes: 10
         run: chmod +x gradlew && ./gradlew assembleFdroidRelease
 
       - name: Upload APK artifact
@@ -49,28 +97,6 @@ jobs:
           name: QuestPhone-${{ github.run_number }}
           path: app/build/outputs/apk/fdroid/release/*.apk
           retention-days: 30
-
-      # Only runs when commit message starts with "release:"
-      - name: Check if release commit
-        id: check
-        run: |
-          MSG="${{ github.event.head_commit.message }}"
-          MANUAL="${{ github.event.inputs.release }}"
-          if [[ "$MSG" == release:* ]] || [[ "$MANUAL" == "true" ]]; then
-            echo "do_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "do_release=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Get version info
-        id: version
-        if: steps.check.outputs.do_release == 'true'
-        run: |
-          CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
-          NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '".*"' | tr -d '"' | head -1)
-          echo "code=$CODE" >> $GITHUB_OUTPUT
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "tag=v$NAME-$CODE" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         id: release
@@ -96,7 +122,7 @@ jobs:
           apk = next((a for a in assets if a['name'].endswith('.apk')), None)
           print(apk['browser_download_url'] if apk else '')
           ")
-          curl -sf -X POST "$RENDER_URL/notify-update" \
+          curl -i -X POST "$RENDER_URL/notify-update" \
             -H "Content-Type: application/json" \
             -H "x-sync-token: $SYNC_TOKEN" \
             -d "{\"versionCode\":${{ steps.version.outputs.code }},\"versionName\":\"${{ steps.version.outputs.name }}\",\"downloadUrl\":\"$APK_URL\",\"changelog\":\"${{ github.event.head_commit.message || 'Manual release via workflow_dispatch' }}\"}"
