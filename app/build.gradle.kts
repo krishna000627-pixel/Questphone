@@ -24,8 +24,8 @@ android {
         applicationId = "neth.iecal.questphone"
         minSdk = 26
         targetSdk = 36
-        versionCode = 32
-        versionName = "2.7.1"
+        versionCode = 33
+        versionName = "2.7.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // API key injected at build time from local.properties — never hardcoded in source
