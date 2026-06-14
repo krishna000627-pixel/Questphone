@@ -301,7 +301,6 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
 
             // -- Focus Gatekeeper ------------------------------------------
             item {
-            item {
                 Text(
                     text = "FOCUS & BLOCK",
                     fontSize = 11.sp,
@@ -311,6 +310,7 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                     modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
                 )
             }
+            item {
                 SettingCard(
                     title = "⚔️ Focus Gatekeeper",
                     subtitle = "Mon–Fri blocks non-study apps during focus window"
@@ -526,13 +526,6 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
             }
 
             item {
-                val kaiModels = neth.iecal.questphone.core.ai.KAI_MODELS
-                var selectedModel by remember { mutableStateOf(settingsVm.userRepository.userInfo.aiModel) }
-                var selectedAvatar by remember { mutableIntStateOf(settingsVm.userRepository.userInfo.aiAvatarIndex) }
-                var coinCost by remember { mutableIntStateOf(settingsVm.userRepository.userInfo.aiCoinCostPerMin) }
-                var assistantPkg by remember { mutableStateOf(settingsVm.userRepository.userInfo.aiAssistantPackage) }
-
-            item {
                 Text(
                     text = "AI & SYNC",
                     fontSize = 11.sp,
@@ -542,6 +535,13 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                     modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
                 )
             }
+            item {
+                val kaiModels = neth.iecal.questphone.core.ai.KAI_MODELS
+                var selectedModel by remember { mutableStateOf(settingsVm.userRepository.userInfo.aiModel) }
+                var selectedAvatar by remember { mutableIntStateOf(settingsVm.userRepository.userInfo.aiAvatarIndex) }
+                var coinCost by remember { mutableIntStateOf(settingsVm.userRepository.userInfo.aiCoinCostPerMin) }
+                var assistantPkg by remember { mutableStateOf(settingsVm.userRepository.userInfo.aiAssistantPackage) }
+
                 SettingCard(
                     title = "Kai — AI Companion",
                     subtitle = "Active: ${kaiModels.firstOrNull { it.first == selectedModel }?.second ?: selectedModel}"
@@ -758,7 +758,6 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
             }
 
             item {
-            item {
                 Text(
                     text = "MORE",
                     fontSize = 11.sp,
@@ -768,6 +767,7 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                     modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
                 )
             }
+            item {
                 SettingCard(
                     title = "📊 Stats Hub",
                     subtitle = "Screen time, focus history, study tracker, stat charts, coin log, backup"
