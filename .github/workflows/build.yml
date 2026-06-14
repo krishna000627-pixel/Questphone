@@ -40,24 +40,40 @@ jobs:
         id: bump
         if: steps.check.outputs.do_release == 'true'
         run: |
-          OLD_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
-          NEW_CODE=$((OLD_CODE + 1))
-          OLD_NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"' | head -1)
-          # bump patch number of versionName e.g. 2.7.1 -> 2.7.2
-          MAJOR=$(echo "$OLD_NAME" | cut -d. -f1)
-          MINOR=$(echo "$OLD_NAME" | cut -d. -f2)
-          PATCH=$(echo "$OLD_NAME" | cut -d. -f3)
-          NEW_PATCH=$((PATCH + 1))
-          NEW_NAME="$MAJOR.$MINOR.$NEW_PATCH"
-
-          sed -i "s/versionCode = $OLD_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
-          sed -i "s/versionName = \"$OLD_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
-
           git config user.name "QuestPhone CI"
           git config user.email "ci@questphone.app"
-          git add app/build.gradle.kts
-          git commit -m "ci: bump version to $NEW_NAME ($NEW_CODE)"
-          git push
+
+          for i in 1 2 3 4 5; do
+            OLD_CODE=$(grep 'versionCode' app/build.gradle.kts | grep -o '[0-9]*' | head -1)
+            NEW_CODE=$((OLD_CODE + 1))
+            OLD_NAME=$(grep 'versionName' app/build.gradle.kts | grep -o '"[^"]*"' | tr -d '"' | head -1)
+            MAJOR=$(echo "$OLD_NAME" | cut -d. -f1)
+            MINOR=$(echo "$OLD_NAME" | cut -d. -f2)
+            PATCH=$(echo "$OLD_NAME" | cut -d. -f3)
+            NEW_PATCH=$((PATCH + 1))
+            NEW_NAME="$MAJOR.$MINOR.$NEW_PATCH"
+
+            sed -i "s/versionCode = $OLD_CODE/versionCode = $NEW_CODE/" app/build.gradle.kts
+            sed -i "s/versionName = \"$OLD_NAME\"/versionName = \"$NEW_NAME\"/" app/build.gradle.kts
+
+            git add app/build.gradle.kts
+            git commit -m "ci: bump version to $NEW_NAME ($NEW_CODE)"
+
+            if git push; then
+              echo "Pushed successfully on attempt $i"
+              break
+            fi
+
+            echo "Push rejected (attempt $i/5), syncing with remote..."
+            git fetch origin main
+            git reset --hard origin/main
+            sleep $((RANDOM % 4 + 1))
+
+            if [ "$i" = "5" ]; then
+              echo "❌ Failed to push version bump after 5 attempts"
+              exit 1
+            fi
+          done
 
       - name: Get version info
         id: version
@@ -122,6 +138,7 @@ jobs:
           apk = next((a for a in assets if a['name'].endswith('.apk')), None)
           print(apk['browser_download_url'] if apk else '')
           ")
+          echo "SYNC_TOKEN length: ${#SYNC_TOKEN} (expected: 15 for krishna_qp_2026)"
           curl -i -X POST "$RENDER_URL/notify-update" \
             -H "Content-Type: application/json" \
             -H "x-sync-token: $SYNC_TOKEN" \
