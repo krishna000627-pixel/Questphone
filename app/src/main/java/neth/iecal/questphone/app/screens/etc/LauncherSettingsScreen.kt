@@ -173,7 +173,16 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
 
-            // -- Default Launcher ------------------------------------------
+            item {
+                Text(
+                    text = "LAUNCHER",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF444444),
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
+                )
+            }
             item {
                 val isDefault = remember { isSetToDefaultLauncher(context) }
                 SettingCard(
@@ -292,6 +301,16 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
 
             // -- Focus Gatekeeper ------------------------------------------
             item {
+            item {
+                Text(
+                    text = "FOCUS & BLOCK",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF444444),
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
+                )
+            }
                 SettingCard(
                     title = "⚔️ Focus Gatekeeper",
                     subtitle = "Mon–Fri blocks non-study apps during focus window"
@@ -513,6 +532,16 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                 var coinCost by remember { mutableIntStateOf(settingsVm.userRepository.userInfo.aiCoinCostPerMin) }
                 var assistantPkg by remember { mutableStateOf(settingsVm.userRepository.userInfo.aiAssistantPackage) }
 
+            item {
+                Text(
+                    text = "AI & SYNC",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF444444),
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
+                )
+            }
                 SettingCard(
                     title = "Kai — AI Companion",
                     subtitle = "Active: ${kaiModels.firstOrNull { it.first == selectedModel }?.second ?: selectedModel}"
@@ -729,6 +758,16 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
             }
 
             item {
+            item {
+                Text(
+                    text = "MORE",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF444444),
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 2.dp)
+                )
+            }
                 SettingCard(
                     title = "📊 Stats Hub",
                     subtitle = "Screen time, focus history, study tracker, stat charts, coin log, backup"
@@ -857,16 +896,23 @@ val PANEL_ALWAYS_VISIBLE = setOf("Settings")
                 var pendingUpdate by remember { mutableStateOf<neth.iecal.questphone.backed.update.UpdateInfo?>(null) }
                 var downloading by remember { mutableStateOf(false) }
                 var progress by remember { mutableIntStateOf(0) }
+                val cached = remember { neth.iecal.questphone.backed.update.AppUpdater.isCached(context) }
 
                 SettingCard(title = "App Update", subtitle = "Check for a newer version of QuestPhone") {
-                    if (pendingUpdate != null) {
+                    if (cached && pendingUpdate == null) {
+                        // APK already downloaded — show install button immediately
+                        Text("⬆️ Update ready to install", fontSize = 13.sp,
+                            color = Color(0xFFFFAB40), fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(6.dp))
+                        Button(
+                            onClick = { neth.iecal.questphone.backed.update.AppUpdater.triggerInstall(context) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFAB40))
+                        ) { Text("Install Now", color = Color.Black, fontWeight = FontWeight.Bold) }
+                    } else if (pendingUpdate != null) {
                         val update = pendingUpdate!!
-                        Text(
-                            "⬆️ v${update.versionName} available",
-                            fontSize = 13.sp,
-                            color = Color(0xFFFFAB40),
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Text("⬆️ v${update.versionName} available", fontSize = 13.sp,
+                            color = Color(0xFFFFAB40), fontWeight = FontWeight.SemiBold)
                         if (update.changelog.isNotBlank()) {
                             Text(update.changelog, fontSize = 11.sp, color = Color(0xFF666666))
                         }
