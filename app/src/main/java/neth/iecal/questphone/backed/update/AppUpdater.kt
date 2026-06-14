@@ -58,41 +58,56 @@ object AppUpdater {
             } catch (_: Exception) { null }
         }
 
+    private fun apkFile(ctx: Context) =
+        File(File(ctx.cacheDir, "apks").also { it.mkdirs() }, "questphone_update.apk")
+
+    fun isCached(ctx: Context): Boolean {
+        val f = apkFile(ctx)
+        return f.exists() && f.length() > 5_000_000
+    }
+
+    fun triggerInstall(ctx: Context) {
+        val f = apkFile(ctx)
+        val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".provider", f)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(intent)
+    }
+
     // Download APK into cache and trigger install
     suspend fun downloadAndInstall(
         ctx: Context,
         url: String,
         onProgress: (Int) -> Unit
     ) = withContext(Dispatchers.IO) {
-        val apkDir = File(ctx.cacheDir, "apks").also { it.mkdirs() }
-        val apkFile = File(apkDir, "questphone_update.apk")
+        val apkFile = apkFile(ctx)
 
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 30000
-            readTimeout = 30000
-        }
-        val total = conn.contentLength.toLong()
-        conn.inputStream.use { input ->
-            apkFile.outputStream().use { output ->
-                val buf = ByteArray(8192)
-                var downloaded = 0L
-                var bytes: Int
-                while (input.read(buf).also { bytes = it } != -1) {
-                    output.write(buf, 0, bytes)
-                    downloaded += bytes
-                    if (total > 0) onProgress(((downloaded * 100) / total).toInt())
+        if (!isCached(ctx)) {
+            val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 30000
+                readTimeout = 30000
+            }
+            val total = conn.contentLength.toLong()
+            conn.inputStream.use { input ->
+                apkFile.outputStream().use { output ->
+                    val buf = ByteArray(8192)
+                    var downloaded = 0L
+                    var bytes: Int
+                    while (input.read(buf).also { bytes = it } != -1) {
+                        output.write(buf, 0, bytes)
+                        downloaded += bytes
+                        if (total > 0) onProgress(((downloaded * 100) / total).toInt())
+                    }
                 }
             }
+            conn.disconnect()
+        } else {
+            onProgress(100)
         }
-        conn.disconnect()
 
-        // Trigger install via FileProvider
-        val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.provider", apkFile)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        ctx.startActivity(intent)
+        triggerInstall(ctx)
     }
 
     fun skipVersion(ctx: Context, versionCode: Int) {
