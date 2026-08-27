@@ -1,0 +1,262 @@
+[
+  {
+    "name": "AnkiDroid",
+    "packageName": "com.ichi2.anki",
+    "description": "Spaced repetition flashcards — pairs perfectly with QuestPhone's study tracker.",
+    "category": "Study",
+    "source": "github",
+    "githubRepo": "ankidroid/Anki-Android",
+    "apkAssetPattern": "arm64-v8a",
+    "autoPlugin": true
+  },
+  {
+    "name": "Obsidian",
+    "packageName": "md.obsidian",
+    "description": "Markdown note-taking with backlinks. Use as your second brain alongside QuestPhone.",
+    "category": "Notes",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Notion",
+    "packageName": "notion.id",
+    "description": "All-in-one workspace for notes, tasks, and databases.",
+    "category": "Notes",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Logseq",
+    "packageName": "com.logseq.app",
+    "description": "Privacy-first knowledge graph and outliner.",
+    "category": "Notes",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Forest",
+    "packageName": "cc.forestapp",
+    "description": "Stay focused with the Pomodoro tree method. Syncs well with QuestPhone focus sessions.",
+    "category": "Focus",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Habitica",
+    "packageName": "com.habitrpg.android.habitica",
+    "description": "Gamify your habits and tasks with RPG mechanics.",
+    "category": "Productivity",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Todoist",
+    "packageName": "com.todoist",
+    "description": "Powerful task manager with projects and priorities.",
+    "category": "Productivity",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Duolingo",
+    "packageName": "com.duolingo",
+    "description": "Learn languages daily. Add as a plugin to track as a study app.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Brilliant",
+    "packageName": "org.brilliant.android",
+    "description": "Math, science and CS courses with interactive problem solving.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Khan Academy",
+    "packageName": "org.khanacademy.android",
+    "description": "Free world-class education in math, science, and more.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Quizlet",
+    "packageName": "com.quizlet.quizletandroid",
+    "description": "Flashcards and study sets. Great companion to AnkiDroid.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Termux",
+    "packageName": "com.termux",
+    "description": "Linux terminal on Android. Required for QuestPhone development.",
+    "category": "Developer",
+    "source": "github",
+    "githubRepo": "termux/termux-app",
+    "apkAssetPattern": "arm64-v8a",
+    "autoPlugin": true
+  },
+  {
+    "name": "Acode",
+    "packageName": "com.foxdebug.acode",
+    "description": "Powerful code editor for Android.",
+    "category": "Developer",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Grazer",
+    "packageName": "com.microsoft.launcher.enterprise",
+    "description": "GitHub mobile client.",
+    "category": "Developer",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "GitHub",
+    "packageName": "com.github.android",
+    "description": "Official GitHub app for managing repos on the go.",
+    "category": "Developer",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "YouTube",
+    "packageName": "com.google.android.youtube",
+    "description": "Video platform. Mark as distraction or allowance app in QuestPhone.",
+    "category": "Entertainment",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Spotify",
+    "packageName": "com.spotify.music",
+    "description": "Music streaming. Use with QuestPhone focus mode allowance.",
+    "category": "Entertainment",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "VLC",
+    "packageName": "org.videolan.vlc",
+    "description": "Open source media player for any format.",
+    "category": "Entertainment",
+    "source": "github",
+    "githubRepo": "videolan/vlc-android",
+    "apkAssetPattern": "arm64-v8a",
+    "autoPlugin": false
+  },
+  {
+    "name": "Simple Calendar",
+    "packageName": "com.simplemobiletools.calendar.pro",
+    "description": "Open source privacy-focused calendar.",
+    "category": "Productivity",
+    "source": "github",
+    "githubRepo": "SimpleMobileTools/Simple-Calendar",
+    "apkAssetPattern": ".apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Bitwarden",
+    "packageName": "com.x8bit.bitwarden",
+    "description": "Open source password manager.",
+    "category": "Utilities",
+    "source": "github",
+    "githubRepo": "bitwarden/android",
+    "apkAssetPattern": ".apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Nova Launcher",
+    "packageName": "com.teslacoilsw.launcher",
+    "description": "Highly customizable home screen launcher.",
+    "category": "Utilities",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Telegram",
+    "packageName": "org.telegram.messenger",
+    "description": "Fast, privacy-focused messaging.",
+    "category": "Social",
+    "source": "direct",
+    "downloadUrl": "https://telegram.org/dl/android/apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Signal",
+    "packageName": "org.thoughtcrime.securesms",
+    "description": "Encrypted messaging. Privacy-first alternative to WhatsApp.",
+    "category": "Social",
+    "source": "direct",
+    "downloadUrl": "https://signal.org/android/apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Firefox",
+    "packageName": "org.mozilla.firefox",
+    "description": "Open source browser with strong privacy features.",
+    "category": "Utilities",
+    "source": "github",
+    "githubRepo": "mozilla-mobile/firefox-android",
+    "apkAssetPattern": "arm64-v8a",
+    "autoPlugin": false
+  },
+  {
+    "name": "Organic Maps",
+    "packageName": "app.organicmaps",
+    "description": "Offline maps and navigation. No tracking, no ads.",
+    "category": "Utilities",
+    "source": "github",
+    "githubRepo": "organicmaps/organicmaps",
+    "apkAssetPattern": ".apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Sky Map",
+    "packageName": "com.google.android.stardroid",
+    "description": "Point your phone at the sky to identify stars and planets.",
+    "category": "Study",
+    "source": "github",
+    "githubRepo": "sky-map-team/stardroid",
+    "apkAssetPattern": ".apk",
+    "autoPlugin": false
+  },
+  {
+    "name": "Wolfram Alpha",
+    "packageName": "com.wolfram.android.alpha",
+    "description": "Computational knowledge engine. Essential for STEM students.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Photomath",
+    "packageName": "com.microblink.photomath",
+    "description": "Scan and solve math problems step by step.",
+    "category": "Study",
+    "source": "playstore",
+    "autoPlugin": true
+  },
+  {
+    "name": "Sleep as Android",
+    "packageName": "com.urbandroid.sleep",
+    "description": "Smart alarm and sleep tracker. Pairs with QuestPhone daily routines.",
+    "category": "Productivity",
+    "source": "playstore",
+    "autoPlugin": false
+  },
+  {
+    "name": "Zotero",
+    "packageName": "org.zotero.android",
+    "description": "Research reference manager for students and academics.",
+    "category": "Study",
+    "source": "github",
+    "githubRepo": "zotero/zotero-android",
+    "apkAssetPattern": ".apk",
+    "autoPlugin": true
+  }
+]
