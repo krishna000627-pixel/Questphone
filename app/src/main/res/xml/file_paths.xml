@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="logs" path="." />
+    <cache-path name="shared_images" path="." />
+    <cache-path name="apks" path="apks/" />
+    <!-- Plugin Store spec §2: staging cache lives at /cache/plugin_apks/ -->
+    <cache-path name="plugin_apks" path="plugin_apks/" />
+</paths>
