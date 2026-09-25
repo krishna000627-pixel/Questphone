@@ -1,0 +1,8 @@
+{
+  "name": "QuestPhone",
+  "description": "Gamified launcher turning daily phone habits and tasks into RPG quests with streak tracking, screen time focus, and leveling system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
